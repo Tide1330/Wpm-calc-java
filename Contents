@@ -1,0 +1,136 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+
+class text extends JFrame implements ActionListener {
+    static JTextField t;
+    static JFrame f;
+    static JButton b;
+    static JPanel promptPanel;
+    static JLabel resultLabel;
+    static JLabel currentPromptLabel;
+    static long startTime = 0;
+    static boolean timerStarted = false;
+    static String currentPrompt = "";  
+
+    static String[] prompts = {
+        "The cat ran up the tree",
+        "I like to read at night",
+        "She smiled and waved at me",
+        "We had pizza for lunch today",
+        "He jumped over the small wall",
+        "My dog sleeps by the door",
+        "The sun sets behind the hills",
+        "Please bring your books to class",
+        "It is cold outside this morning"
+    };
+
+    text() {}
+
+    public static void main(String[] args) {
+        f = new JFrame("Words per minute calculator");
+
+        b = new JButton("submit");
+        text te = new text();
+        b.addActionListener(te);
+
+        t = new JTextField(16);
+
+        
+        t.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                if (!timerStarted && t.getText().length() == 1) {
+                    startTime = System.currentTimeMillis();
+                    timerStarted = true;
+                }
+            }
+            public void removeUpdate(DocumentEvent e) {}
+            public void changedUpdate(DocumentEvent e) {}
+        });
+
+        
+        t.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                b.doClick(); 
+            }
+        });
+
+        resultLabel = new JLabel(" ");
+        resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        resultLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+
+        currentPromptLabel = new JLabel("Type the prompt below and press Enter");
+        currentPromptLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        currentPromptLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.add(resultLabel, BorderLayout.NORTH);
+
+        JPanel inputFieldPanel = new JPanel();
+        inputFieldPanel.add(t);
+        inputFieldPanel.add(b);
+        inputPanel.add(currentPromptLabel, BorderLayout.CENTER);
+        inputPanel.add(inputFieldPanel, BorderLayout.SOUTH);
+
+        promptPanel = new JPanel();
+        promptPanel.setLayout(new BoxLayout(promptPanel, BoxLayout.Y_AXIS));
+        promptPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JScrollPane scrollPane = new JScrollPane(promptPanel);
+
+        f.setLayout(new BorderLayout());
+        f.add(inputPanel, BorderLayout.NORTH);
+        f.add(scrollPane, BorderLayout.CENTER);
+
+        f.setSize(500, 400);
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.setVisible(true);
+
+        showNewPrompt();
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if (e.getActionCommand().equals("submit")) {
+            String userInput = t.getText().trim();
+            t.setText("");
+
+            long endTime = System.currentTimeMillis();
+            long elapsedTime = endTime - startTime;
+            double seconds = elapsedTime / 1000.0;
+            timerStarted = false;
+
+            
+            JLabel newLabel = new JLabel(currentPrompt);
+            newLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            newLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+            newLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+            promptPanel.add(newLabel, 0);
+            promptPanel.revalidate();
+            promptPanel.repaint();
+
+            int wordCount = 0;
+            if (!userInput.isEmpty()) {
+                wordCount = userInput.trim().split("\\s+").length;
+            }
+
+            double wpm = (wordCount / seconds) * 60;
+
+            if (userInput.equals(currentPrompt)) {
+                resultLabel.setText(String.format("WPM: %.2f | Time: %.2fs | Correct!", wpm, seconds));
+                resultLabel.setForeground(Color.GREEN); 
+            } else {
+                resultLabel.setText(String.format("WPM: %.2f | Time: %.2fs | Incorrect!", wpm, seconds));
+                resultLabel.setForeground(Color.RED); 
+            }
+
+            showNewPrompt(); 
+        }
+    }
+
+    static void showNewPrompt() {
+        int number = (int) (Math.random() * prompts.length);
+        currentPrompt = prompts[number];
+        currentPromptLabel.setText("Prompt: " + currentPrompt);
+    }
+}
